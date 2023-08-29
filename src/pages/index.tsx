@@ -1,8 +1,11 @@
 import React, { useState } from "react"
 import { api } from "~/utils/api"
-import { signIn } from "next-auth/react"
+import { signIn, signOut, useSession } from "next-auth/react"
 
 const CreateUser = () => {
+  const { data: sessionData } = useSession()
+  const { data: secretMessage } = api.user.secret.useQuery(undefined, // no input
+    { enabled: sessionData?.user !== undefined })
   const { mutate } = api.user.create.useMutation()
 
   const [username, setUsername] = useState('')
@@ -23,9 +26,36 @@ const CreateUser = () => {
         <input type="password" value={password} id="password" onChange={e => setPassword(e.currentTarget.value)} />
         <button type="submit">Enviar</button>
       </form>
-      <button onClick={() => void signIn()}>signIn</button>
+      <AuthShowcase></AuthShowcase>
     </div>
   )
 }
 
 export default CreateUser
+
+
+
+
+function AuthShowcase() {
+  const { data: sessionData } = useSession();
+
+  const { data: secretMessage } = api.user.secret.useQuery(
+    undefined, // no input
+    { enabled: sessionData?.user !== undefined }
+  );
+
+  return (
+    <div >
+      <p >
+        {sessionData && <span>Logged in as {sessionData.user.name}</span>}
+        {secretMessage && <span> - {secretMessage}</span>}
+      </p>
+      <button
+
+        onClick={sessionData ? () => void signOut() : () => void signIn()}
+      >
+        {sessionData ? "Sign out" : "Sign in"}
+      </button>
+    </div>
+  );
+}

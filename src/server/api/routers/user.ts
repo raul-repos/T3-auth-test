@@ -1,6 +1,7 @@
 
 import {
   createTRPCRouter,
+  protectedProcedure,
   publicProcedure,
 } from "~/server/api/trpc";
 import { UserModel } from "~/utils/z.types";
@@ -18,5 +19,9 @@ export const userRouter = createTRPCRouter({
   getAll: publicProcedure.query(({ ctx }) => {
     return ctx.prisma.user.findMany();
   }),
+
+  secret: protectedProcedure.query(() => {
+    return "Secret Message because you are logged in!"
+  })
 
 });

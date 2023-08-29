@@ -26,8 +26,8 @@ declare module "next-auth" {
     //   // ...other properties
     //   // role: UserRole;
     // };
-    user: DefaultSession["user"]
-    // user: DefaultSession["user"] & UserModelType
+    // user: DefaultSession["user"]
+    user: DefaultSession["user"] & UserModelType
   }
 
   // interface User {
@@ -42,23 +42,50 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  session: {
+    strategy: "jwt"
+  },
   callbacks: {
-    session: ({ session, user }) => ({
+    session: ({ session, user, token }) => ({
       ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-      },
+      // user: {
+      //   ...session.user,
+      //   id: user.id,
+      // },
+      token: { ...token }
     }),
+    jwt: ({ token, account, profile }) => {
+      if (account) {
+        token = { ...token, ...account }
+      }
+      if (profile) {
+        token = { ...token, ...profile }
+      }
+      return token
+
+    },
+    signIn: ({ user, account, profile }) => {
+      try {
+        console.info('signIn callback => USER:', { user })
+        if (user) return '/'
+        return false
+
+      } catch (error) {
+        console.warn("signIn callback => ERROR:", { error })
+        return false
+      }
+    }
   },
   adapter: PrismaAdapter(prisma),
   providers: [
-    DiscordProvider({
-      clientId: env.DISCORD_CLIENT_ID,
-      clientSecret: env.DISCORD_CLIENT_SECRET,
-    }),
+    // DiscordProvider({
+    //   clientId: env.DISCORD_CLIENT_ID,
+    //   clientSecret: env.DISCORD_CLIENT_SECRET,
+    // }),
     CredentialsProvider({
+      id: 'unique-id',
       name: 'Credentials',
+      type: "credentials",
       credentials: {
         username: { label: 'usuario', type: 'text' },
         password: { label: 'contraseña', type: 'password' }
